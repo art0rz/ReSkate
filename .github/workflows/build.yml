@@ -22,13 +22,13 @@ jobs:
           arch: x64
 
       - name: Configure
+        # PowerShell splits an unquoted -DNAME=a.b.c at the dots, so every -D is quoted.
         run: >
           cmake --preset vs2022-x64
-          -DDINGOSDK_VERSION=0.0.0
-          -DDINGOSDK_BUILD_MULTIPLAYER_TESTS=ON
-          -DDINGOSDK_BUILD_LAUNCHER_TESTS=ON
-          -DDINGOSDK_BUILD_PARK_EDITOR_TESTS=ON
-          -DDINGOSDK_BUILD_CRASH_REPORT_TESTS=ON
+          "-DDINGOSDK_BUILD_MULTIPLAYER_TESTS=ON"
+          "-DDINGOSDK_BUILD_LAUNCHER_TESTS=ON"
+          "-DDINGOSDK_BUILD_PARK_EDITOR_TESTS=ON"
+          "-DDINGOSDK_BUILD_CRASH_REPORT_TESTS=ON"
 
       - name: Build
         run: cmake --build --preset release --parallel 4
