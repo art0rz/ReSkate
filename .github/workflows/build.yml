@@ -23,6 +23,11 @@ jobs:
         with:
           arch: x64
 
+      # Caches the Rust crates and what cargo compiled, so only changes to the helper rebuild.
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: SpotifyHelper
+
       # CMake looks for the Windows import library in the cargo registry while configuring,
       # so the Spotify helper's crates have to be fetched first.
       - name: Fetch Spotify helper crates
