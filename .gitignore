@@ -4,6 +4,7 @@
 /artifacts/
 /logs/
 /.vs/
+.idea
 /CMakeUserPresets.json
 __pycache__/
 *.log
