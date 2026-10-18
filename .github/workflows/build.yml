@@ -1,0 +1,47 @@
+name: Build
+
+# Builds the Windows binaries and uploads them as a workflow artifact. Publishes nothing:
+# no release, no launcher.json.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  windows:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Configure
+        run: >
+          cmake --preset vs2022-x64
+          -DDINGOSDK_VERSION=0.0.0
+          -DDINGOSDK_BUILD_MULTIPLAYER_TESTS=ON
+          -DDINGOSDK_BUILD_LAUNCHER_TESTS=ON
+          -DDINGOSDK_BUILD_PARK_EDITOR_TESTS=ON
+          -DDINGOSDK_BUILD_CRASH_REPORT_TESTS=ON
+
+      - name: Build
+        run: cmake --build --preset release --parallel 4
+
+      - name: Test
+        run: ctest --test-dir build/vs2022-x64 -C Release --output-on-failure
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ReSkate-windows-x64
+          if-no-files-found: error
+          path: |
+            build/vs2022-x64/Release/ReSkateLauncher.exe
+            build/vs2022-x64/Release/ReSkate.dll
+            build/vs2022-x64/Release/ReSkateServer.exe
+            build/vs2022-x64/Release/ReSkateEmotePacker.exe
