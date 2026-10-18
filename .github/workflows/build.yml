@@ -1,7 +1,7 @@
 name: Build
 
-# Builds the Windows binaries and uploads them as a workflow artifact. Publishes nothing:
-# no release, no launcher.json.
+# Builds the Windows binaries and uploads them as a workflow artifact. A push to main also
+# replaces this repository's rolling "latest" pre-release (no launcher.json, no auto-update).
 on:
   push:
   pull_request:
@@ -14,6 +14,8 @@ concurrency:
 jobs:
   windows:
     runs-on: windows-2022
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -42,12 +44,29 @@ jobs:
       - name: Test
         run: ctest --test-dir build/vs2022-x64 -C Release --output-on-failure
 
+      # The update scripts get this repository's name so they download from this fork.
+      - name: Stage
+        shell: bash
+        run: |
+          mkdir stage
+          cp build/vs2022-x64/Release/{ReSkateLauncher.exe,ReSkate.dll,ReSkateServer.exe,ReSkateEmotePacker.exe} stage/
+          for script in update-from-fork.sh update-from-fork.bat; do
+            sed "s|@REPO@|$GITHUB_REPOSITORY|" "contrib/$script" > "stage/$script"
+          done
+
       - uses: actions/upload-artifact@v4
         with:
           name: ReSkate-windows-x64
           if-no-files-found: error
-          path: |
-            build/vs2022-x64/Release/ReSkateLauncher.exe
-            build/vs2022-x64/Release/ReSkate.dll
-            build/vs2022-x64/Release/ReSkateServer.exe
-            build/vs2022-x64/Release/ReSkateEmotePacker.exe
+          path: stage/*
+
+      # A rolling pre-release, so the update scripts can download without a login token.
+      - name: Publish the latest build
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete latest --cleanup-tag --yes || true
+          gh release create latest stage/* --prerelease --target "$GITHUB_SHA" \
+            --title "Latest build" --notes "Built from $GITHUB_SHA"

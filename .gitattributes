@@ -14,3 +14,7 @@ External/steam_networking/** -text
 External/steam_networking/** whitespace=-blank-at-eol
 
 External/miniz/** -text
+
+# The fork update scripts must keep their line endings to run.
+contrib/update-from-fork.bat text eol=crlf
+contrib/update-from-fork.sh text eol=lf
