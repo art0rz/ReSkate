@@ -21,6 +21,12 @@ jobs:
         with:
           arch: x64
 
+      # CMake looks for the Windows import library in the cargo registry while configuring,
+      # so the Spotify helper's crates have to be fetched first.
+      - name: Fetch Spotify helper crates
+        working-directory: SpotifyHelper
+        run: cargo fetch --locked
+
       - name: Configure
         # PowerShell splits an unquoted -DNAME=a.b.c at the dots, so every -D is quoted.
         run: >
